@@ -1,0 +1,58 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from app.core.config import settings
+from app.api.api_v1.api import api_router
+from app.db.init_db import init_db
+
+def create_application() -> FastAPI:
+    """
+    Create and configure the FastAPI application.
+    
+    Returns:
+        FastAPI: Configured FastAPI application instance
+    """
+    application = FastAPI(
+        title="UniResource Hub API",
+        description="A centralized platform for managing and accessing academic learning resources for ALU students",
+        version="1.0.0",
+        docs_url="/docs" if settings.DEBUG else None,
+        redoc_url="/redoc" if settings.DEBUG else None,
+    )
+
+    # Set all CORS enabled origins
+    if settings.BACKEND_CORS_ORIGINS:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    # Add trusted host middleware for security
+    application.add_middleware(
+        TrustedHostMiddleware, 
+        allowed_hosts=["localhost", "127.0.0.1", "*.alu.edu"]
+    )
+
+    # Include API router
+    application.include_router(api_router, prefix="/api/v1")
+
+    return application
+
+app = create_application()
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    init_db()
+
+@app.get("/")
+async def root():
+    """Root endpoint for health check."""
+    return {
+        "message": "UniResource Hub API",
+        "status": "healthy",
+        "version": "1.0.0"
+    }
