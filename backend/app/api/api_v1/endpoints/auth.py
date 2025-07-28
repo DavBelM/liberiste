@@ -60,7 +60,9 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     Raises:
         HTTPException: If user account is inactive
     """
-    if current_user.account_status != "active":
+    # Accept all Enum and string representations for account_status, case-insensitive
+    status_str = str(current_user.account_status).lower()
+    if "active" not in status_str:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail="Inactive user account"
@@ -120,26 +122,37 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     Raises:
         HTTPException: If credentials are invalid
     """
+    print(f"[DEBUG] Login attempt: username={form_data.username}, password={form_data.password}")
     user = db.query(User).filter(User.email == form_data.username).first()
-    
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user:
+        print("[DEBUG] No user found with that email.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    if user.account_status != "active":
+    password_ok = verify_password(form_data.password, user.password_hash)
+    print(f"[DEBUG] Password valid: {password_ok}")
+    if not password_ok:
+        print(f"[DEBUG] Password check failed for user {form_data.username}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # Accept all Enum and string representations for account_status, case-insensitive
+    status_str = str(user.account_status).lower()
+    if "active" not in status_str:
+        print(f"[DEBUG] User {form_data.username} is not active: {user.account_status}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Account is not active"
         )
-    
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
-    
+    print(f"[DEBUG] Login successful for user {form_data.username}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=Token)
