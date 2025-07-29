@@ -15,6 +15,7 @@ import {
   Tag,
   ChevronDown
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { resourcesAPI, categoriesAPI, bookmarksAPI } from '../services/api';
 
 interface Resource {
@@ -40,9 +41,10 @@ interface Category {
 }
 
 export const ResourcesPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [selectedType, setSelectedType] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -53,10 +55,12 @@ export const ResourcesPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchResources();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedCategory, selectedType]);
 
   const fetchData = async () => {
@@ -140,6 +144,50 @@ export const ResourcesPage: React.FC = () => {
   const categoryOptions = ['All', ...categories.map(cat => cat.name)];
   const resourceTypes = ['All', 'Files', 'Links'];
 
+  const handleResourceAction = (resource: Resource) => {
+    if (resource.resource_type === 'file') {
+      // Download file
+      const downloadUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/resources/${resource.id}/download`;
+      const token = localStorage.getItem('access_token');
+      
+      // Create a temporary link to download the file
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', resource.title);
+      
+      // Add authorization header by opening in new tab with token
+      if (token) {
+        fetch(downloadUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = resource.title;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        })
+        .catch(error => {
+          console.error('Download failed:', error);
+          alert('Download failed. Please try again.');
+        });
+      }
+    } else {
+      // Open link in new tab
+      if (resource.url) {
+        window.open(resource.url, '_blank');
+      } else {
+        alert('No URL available for this resource.');
+      }
+    }
+  };
+
   const ResourceCard = ({ resource }: { resource: Resource }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 overflow-hidden">
       <div className="p-6">
@@ -202,7 +250,10 @@ export const ResourcesPage: React.FC = () => {
             {resource.file_size && (
               <span className="text-xs text-gray-500">{formatFileSize(resource.file_size)}</span>
             )}
-            <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => handleResourceAction(resource)}
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            >
               {resource.resource_type === 'file' ? (
                 <>
                   <Download className="h-4 w-4 mr-1" />
@@ -257,7 +308,10 @@ export const ResourcesPage: React.FC = () => {
               <Bookmark className="h-4 w-4 text-gray-400" />
             )}
           </button>
-          <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => handleResourceAction(resource)}
+            className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          >
             {resource.resource_type === 'file' ? (
               <>
                 <Download className="h-3 w-3 mr-1" />
