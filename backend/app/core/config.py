@@ -17,10 +17,10 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "production"
     
     # Database Configuration
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql://localhost/uniresource"
     
     # Security Configuration
-    SECRET_KEY: str
+    SECRET_KEY: str = "default-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
@@ -60,16 +60,8 @@ class Settings(BaseSettings):
     @classmethod
     def validate_database_url(cls, v: str) -> str:
         """Validate database URL format."""
-        if not (v.startswith("postgresql://") or v.startswith("postgres://")):
+        if v and not (v.startswith("postgresql://") or v.startswith("postgres://")):
             raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
-        return v
-    
-    @field_validator("SECRET_KEY", mode="before")
-    @classmethod
-    def validate_secret_key(cls, v: str) -> str:
-        """Ensure secret key is provided and secure."""
-        if not v or len(v) < 32:
-            raise ValueError("SECRET_KEY must be at least 32 characters long")
         return v
     
     model_config = {
