@@ -89,6 +89,9 @@ export const usersAPI = {
 
   changePassword: async (currentPassword: string, newPassword: string): Promise<AxiosResponse<any>> =>
     api.post('/users/me/change-password', { current_password: currentPassword, new_password: newPassword }),
+
+  getUserRecentActivity: async (): Promise<AxiosResponse<any>> =>
+    api.get('/users/me/recent-activity'),
 };
 
 // Resources API
