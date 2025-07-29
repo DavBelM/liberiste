@@ -20,10 +20,17 @@ def create_application() -> FastAPI:
         redoc_url="/redoc" if settings.DEBUG else None,
     )
 
-    # Always enable CORS for local frontend
+    # CORS settings for development and production
+    origins = [
+        "http://localhost:3000",  # Development
+        "http://localhost:3001",  # Development
+        "https://*.vercel.app",   # Vercel deployments
+        # Add your actual Vercel domain here after deployment
+    ]
+    
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3001"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -55,3 +62,8 @@ async def root():
         "status": "healthy",
         "version": "1.0.0"
     }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway."""
+    return {"status": "healthy"}
