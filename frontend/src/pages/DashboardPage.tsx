@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Clock,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usersAPI, resourcesAPI } from '../services/api';
 
@@ -33,6 +34,7 @@ interface RecentResource {
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [recentResources, setRecentResources] = useState<RecentResource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,25 +142,37 @@ export const DashboardPage: React.FC = () => {
             Quick Actions
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
+            <button 
+              onClick={() => navigate('/upload')}
+              className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
               <Upload className="h-8 w-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-3 transition-colors" />
               <p className="text-sm font-medium text-gray-600 group-hover:text-blue-500 transition-colors">
                 Upload File
               </p>
             </button>
-            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all group">
+            <button 
+              onClick={() => navigate('/upload')}
+              className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all group"
+            >
               <Link className="h-8 w-8 text-gray-400 group-hover:text-green-500 mx-auto mb-3 transition-colors" />
               <p className="text-sm font-medium text-gray-600 group-hover:text-green-500 transition-colors">
                 Add Link
               </p>
             </button>
-            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all group">
+            <button 
+              onClick={() => navigate('/bookmarks')}
+              className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all group"
+            >
               <Bookmark className="h-8 w-8 text-gray-400 group-hover:text-purple-500 mx-auto mb-3 transition-colors" />
               <p className="text-sm font-medium text-gray-600 group-hover:text-purple-500 transition-colors">
                 View Bookmarks
               </p>
             </button>
-            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group">
+            <button 
+              onClick={() => navigate('/profile')}
+              className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group"
+            >
               <TrendingUp className="h-8 w-8 text-gray-400 group-hover:text-orange-500 mx-auto mb-3 transition-colors" />
               <p className="text-sm font-medium text-gray-600 group-hover:text-orange-500 transition-colors">
                 Analytics
@@ -174,7 +188,10 @@ export const DashboardPage: React.FC = () => {
               <div className="w-2 h-5 bg-green-500 rounded mr-3"></div>
               Recent Resources
             </h3>
-            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+            <button 
+              onClick={() => navigate('/resources')}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
               View all
             </button>
           </div>
