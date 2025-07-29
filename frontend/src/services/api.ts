@@ -6,7 +6,6 @@ import {
   Token,
   Resource,
   ResourceCreate,
-  ResourceFilter,
   Category,
   CategoryCreate,
   Tag,
