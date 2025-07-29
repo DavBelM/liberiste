@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Mail, 
@@ -16,13 +16,20 @@ import {
   Settings
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usersAPI } from '../services/api';
+
+interface UserStats {
+  uploaded_resources: number;
+  bookmarks: number;
+  file_resources: number;
+  link_resources: number;
+  account_created: string;
+}
 
 interface ProfileData {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  bio: string;
-  avatar?: string;
 }
 
 interface PasswordData {
@@ -38,14 +45,20 @@ interface NotificationSettings {
   weeklyDigest: boolean;
 }
 
+interface Activity {
+  type: string;
+  action: string;
+  timestamp: string;
+  resource_id?: number;
+}
+
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: user?.first_name || '',
-    lastName: user?.last_name || '',
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
     email: user?.email || '',
-    bio: 'Computer Science student passionate about machine learning and web development.',
   });
   const [passwordData, setPasswordData] = useState<PasswordData>({
     currentPassword: '',
@@ -58,14 +71,33 @@ export const ProfilePage: React.FC = () => {
     bookmarkReminders: false,
     weeklyDigest: true
   });
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Mock stats data
-  const userStats = {
-    resourcesUploaded: 12,
-    bookmarks: 8,
-    joinedDate: 'September 2023',
-    totalDownloads: 45
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch user stats and recent activity
+      const [statsResponse, activityResponse] = await Promise.all([
+        usersAPI.getUserStats(),
+        usersAPI.getUserRecentActivity?.() || Promise.resolve({ data: { activities: [] } })
+      ]);
+      
+      setUserStats(statsResponse.data);
+      setRecentActivity(activityResponse.data?.activities || []);
+      
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const tabs = [
@@ -78,11 +110,12 @@ export const ProfilePage: React.FC = () => {
   const handleProfileSave = async () => {
     setSaving(true);
     try {
-      // TODO: Implement profile update API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Profile updated:', profileData);
+      const response = await usersAPI.updateProfile(profileData);
+      updateUser(response.data); // Update auth context
+      alert('Profile updated successfully!');
     } catch (error) {
       console.error('Failed to update profile:', error);
+      alert('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -94,14 +127,19 @@ export const ProfilePage: React.FC = () => {
       return;
     }
     
+    if (passwordData.newPassword.length < 8) {
+      alert('New password must be at least 8 characters long');
+      return;
+    }
+    
     setSaving(true);
     try {
-      // TODO: Implement password change API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Password changed');
+      await usersAPI.changePassword(passwordData.currentPassword, passwordData.newPassword);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      alert('Password changed successfully!');
     } catch (error) {
       console.error('Failed to change password:', error);
+      alert('Failed to change password. Please check your current password.');
     } finally {
       setSaving(false);
     }
@@ -110,14 +148,27 @@ export const ProfilePage: React.FC = () => {
   const handleNotificationSave = async () => {
     setSaving(true);
     try {
-      // TODO: Implement notification settings API call
+      // Note: This would need a backend endpoint for notification settings
+      // For now, just simulate the save
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Notification settings updated:', notifications);
+      alert('Notification settings updated!');
     } catch (error) {
       console.error('Failed to update notifications:', error);
     } finally {
       setSaving(false);
     }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return '1 day ago';
+    return `${diffInDays} days ago`;
   };
 
   const ProfileTab = () => (
@@ -129,7 +180,7 @@ export const ProfilePage: React.FC = () => {
           <div className="relative">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-2xl">
-                {profileData.firstName[0]}{profileData.lastName[0]}
+                {profileData.first_name[0]}{profileData.last_name[0]}
               </span>
             </div>
             <button className="absolute bottom-0 right-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
@@ -154,8 +205,8 @@ export const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             <input
               type="text"
-              value={profileData.firstName}
-              onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+              value={profileData.first_name}
+              onChange={(e) => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -163,8 +214,8 @@ export const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
             <input
               type="text"
-              value={profileData.lastName}
-              onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+              value={profileData.last_name}
+              onChange={(e) => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -176,16 +227,6 @@ export const ProfilePage: React.FC = () => {
             value={profileData.email}
             onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-          <textarea
-            value={profileData.bio}
-            onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-            rows={4}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Tell us about yourself..."
           />
         </div>
         <div className="mt-6">
@@ -320,7 +361,7 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Resources Uploaded</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.resourcesUploaded}</p>
+              <p className="text-2xl font-bold text-gray-900">{userStats?.uploaded_resources || 0}</p>
             </div>
           </div>
         </div>
@@ -331,7 +372,7 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Bookmarks</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.bookmarks}</p>
+              <p className="text-2xl font-bold text-gray-900">{userStats?.bookmarks || 0}</p>
             </div>
           </div>
         </div>
@@ -341,8 +382,8 @@ export const ProfilePage: React.FC = () => {
               <FileText className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Downloads</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.totalDownloads}</p>
+              <p className="text-sm font-medium text-gray-600">File Resources</p>
+              <p className="text-2xl font-bold text-gray-900">{userStats?.file_resources || 0}</p>
             </div>
           </div>
         </div>
@@ -353,7 +394,9 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Member Since</p>
-              <p className="text-sm font-bold text-gray-900">{userStats.joinedDate}</p>
+              <p className="text-sm font-bold text-gray-900">
+                {userStats?.account_created ? new Date(userStats.account_created).toLocaleDateString() : 'N/A'}
+              </p>
             </div>
           </div>
         </div>
@@ -363,28 +406,43 @@ export const ProfilePage: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Upload className="h-5 w-5 text-blue-600" />
+          {recentActivity.length > 0 ? (
+            recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  {activity.type === 'upload' ? (
+                    <Upload className="h-5 w-5 text-blue-600" />
+                  ) : (
+                    <Bookmark className="h-5 w-5 text-purple-600" />
+                  )}
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                  <p className="text-xs text-gray-500">{formatTimeAgo(activity.timestamp)}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No recent activity</p>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-900">Uploaded "Machine Learning Guide"</p>
-              <p className="text-xs text-gray-500">2 hours ago</p>
-            </div>
-          </div>
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Bookmark className="h-5 w-5 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-900">Bookmarked "Data Structures Tutorial"</p>
-              <p className="text-xs text-gray-500">1 day ago</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
