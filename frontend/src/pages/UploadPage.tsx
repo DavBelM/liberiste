@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, 
   Link as LinkIcon, 
@@ -10,19 +10,27 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { resourcesAPI, categoriesAPI, tagsAPI } from '../services/api';
 
 type UploadType = 'file' | 'link';
 
 interface FormData {
   title: string;
   description: string;
-  categories: string[];
+  categories: number[];
   tags: string[];
   url?: string;
   file?: File;
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export const UploadPage: React.FC = () => {
+  const navigate = useNavigate();
   const [uploadType, setUploadType] = useState<UploadType>('file');
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -34,19 +42,25 @@ export const UploadPage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock data
-  const availableCategories = [
-    'Computer Science',
-    'Programming',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'Literature',
-    'History'
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await categoriesAPI.getCategories();
+      setAvailableCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -93,12 +107,12 @@ export const UploadPage: React.FC = () => {
     }));
   };
 
-  const toggleCategory = (category: string) => {
+  const toggleCategory = (categoryId: number) => {
     setFormData(prev => ({
       ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter(cat => cat !== category)
-        : [...prev.categories, category]
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(id => id !== categoryId)
+        : [...prev.categories, categoryId]
     }));
   };
 
@@ -107,8 +121,26 @@ export const UploadPage: React.FC = () => {
     setUploading(true);
 
     try {
-      // TODO: Implement actual upload logic
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate upload
+      if (uploadType === 'file' && formData.file) {
+        // Upload file
+        await resourcesAPI.uploadFile(formData.file, {
+          title: formData.title,
+          description: formData.description,
+          category_ids: formData.categories,
+          tag_names: formData.tags,
+        });
+      } else if (uploadType === 'link' && formData.url) {
+        // Create link resource
+        await resourcesAPI.createResource({
+          title: formData.title,
+          description: formData.description,
+          resource_type: 'link',
+          url: formData.url,
+          category_ids: formData.categories,
+          tag_names: formData.tags,
+        });
+      }
+
       setUploadSuccess(true);
       
       // Reset form
@@ -119,7 +151,11 @@ export const UploadPage: React.FC = () => {
         tags: [],
       });
       
-      setTimeout(() => setUploadSuccess(false), 3000);
+      // Redirect to resources page after success
+      setTimeout(() => {
+        navigate('/resources');
+      }, 2000);
+      
     } catch (error) {
       console.error('Upload failed:', error);
     } finally {
@@ -135,6 +171,17 @@ export const UploadPage: React.FC = () => {
     return hasTitle && hasContent && hasCategory;
   };
 
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -147,7 +194,7 @@ export const UploadPage: React.FC = () => {
       {uploadSuccess && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
           <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-          <span className="text-green-800">Resource uploaded successfully!</span>
+          <span className="text-green-800">Resource uploaded successfully! Redirecting to resources...</span>
         </div>
       )}
 
@@ -292,17 +339,17 @@ export const UploadPage: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {availableCategories.map((category) => (
                   <button
-                    key={category}
+                    key={category.id}
                     type="button"
-                    onClick={() => toggleCategory(category)}
+                    onClick={() => toggleCategory(category.id)}
                     className={`p-3 border rounded-lg text-sm font-medium transition-all ${
-                      formData.categories.includes(category)
+                      formData.categories.includes(category.id)
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-gray-200 hover:border-gray-300 text-gray-700'
                     }`}
                   >
                     <Folder className="h-4 w-4 mx-auto mb-1" />
-                    {category}
+                    {category.name}
                   </button>
                 ))}
               </div>
@@ -364,6 +411,7 @@ export const UploadPage: React.FC = () => {
             <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
+                onClick={() => navigate('/resources')}
                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel
