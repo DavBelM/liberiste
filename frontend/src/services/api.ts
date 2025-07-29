@@ -184,6 +184,9 @@ export const bookmarksAPI = {
 
   isBookmarked: async (resourceId: number): Promise<AxiosResponse<{ bookmarked: boolean }>> =>
     api.get(`/bookmarks/check/${resourceId}`),
+
+  toggleBookmark: async (resourceId: number): Promise<AxiosResponse<any>> =>
+    api.post(`/bookmarks/toggle/${resourceId}`),
 };
 
 export default api;
