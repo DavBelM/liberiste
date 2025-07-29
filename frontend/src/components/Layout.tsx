@@ -25,6 +25,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/resources?query=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
 
   const navLinks = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -165,19 +174,25 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             
             {/* Center section - Search bar */}
             <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-              <div className="relative w-full">
+              <form onSubmit={handleSearch} className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search resources..."
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
-              </div>
+              </form>
             </div>
 
             {/* Right section - Notifications + Upload button */}
             <div className="flex items-center space-x-3">
-              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
+              <button 
+                onClick={() => alert('Notifications feature coming soon!')}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                title="Notifications"
+              >
                 <Bell className="h-5 w-5 text-gray-600" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
