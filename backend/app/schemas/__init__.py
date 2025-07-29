@@ -5,14 +5,14 @@ from enum import Enum
 
 class AccountStatus(str, Enum):
     """User account status."""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
 
 class ResourceType(str, Enum):
     """Resource type."""
-    FILE = "file"
-    LINK = "link"
+    FILE = "FILE"
+    LINK = "LINK"
 
 # User Schemas
 class UserBase(BaseModel):

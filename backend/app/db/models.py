@@ -22,14 +22,14 @@ resource_categories = Table(
 
 class AccountStatus(Enum):
     """User account status enumeration."""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
 
 class ResourceType(Enum):
     """Resource type enumeration."""
-    FILE = "file"
-    LINK = "link"
+    FILE = "FILE"
+    LINK = "LINK"
 
 class User(Base):
     """
