@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
-  Mail, 
   Lock, 
   Save, 
   Upload, 
@@ -11,9 +10,7 @@ import {
   Activity,
   Calendar,
   FileText,
-  Bookmark,
-  Award,
-  Settings
+  Bookmark
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usersAPI } from '../services/api';
@@ -45,7 +42,7 @@ interface NotificationSettings {
   weeklyDigest: boolean;
 }
 
-interface Activity {
+interface UserActivity {
   type: string;
   action: string;
   timestamp: string;
@@ -72,7 +69,7 @@ export const ProfilePage: React.FC = () => {
     weeklyDigest: true
   });
   const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+  const [recentActivity, setRecentActivity] = useState<UserActivity[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 

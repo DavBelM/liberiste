@@ -11,7 +11,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { resourcesAPI, categoriesAPI, tagsAPI } from '../services/api';
+import { resourcesAPI, categoriesAPI } from '../services/api';
 
 type UploadType = 'file' | 'link';
 
