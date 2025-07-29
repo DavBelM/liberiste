@@ -105,7 +105,7 @@ export const resourcesAPI = {
   getResource: async (resourceId: number): Promise<AxiosResponse<Resource>> =>
     api.get(`/resources/${resourceId}`),
 
-  createResource: async (resourceData: ResourceCreate): Promise<AxiosResponse<Resource>> =>
+  createResource: async (resourceData: any): Promise<AxiosResponse<Resource>> =>
     api.post('/resources', resourceData),
 
   updateResource: async (resourceId: number, resourceData: Partial<ResourceCreate>): Promise<AxiosResponse<Resource>> =>
