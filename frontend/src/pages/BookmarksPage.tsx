@@ -3,7 +3,6 @@ import {
   Bookmark, 
   BookmarkCheck, 
   Search, 
-  Filter, 
   Download, 
   ExternalLink, 
   FileText, 
@@ -15,6 +14,7 @@ import {
   Grid,
   List
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { bookmarksAPI, categoriesAPI } from '../services/api';
 
 interface BookmarkedResource {
@@ -44,6 +44,7 @@ interface Category {
 }
 
 export const BookmarksPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -65,7 +66,7 @@ export const BookmarksPage: React.FC = () => {
         categoriesAPI.getCategories()
       ]);
       
-      setBookmarkedResources(bookmarksResponse.data.results || bookmarksResponse.data || []);
+      setBookmarkedResources((bookmarksResponse.data as any) || []);
       setCategories(categoriesResponse.data);
       
     } catch (error) {
@@ -120,6 +121,44 @@ export const BookmarksPage: React.FC = () => {
   });
 
   const categoryOptions = ['All', ...categories.map(cat => cat.name)];
+
+  const handleResourceAction = (resource: BookmarkedResource['resource']) => {
+    if (resource.resource_type === 'file') {
+      // Download file
+      const downloadUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/resources/${resource.id}/download`;
+      const token = localStorage.getItem('access_token');
+      
+      if (token) {
+        fetch(downloadUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = resource.title;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        })
+        .catch(error => {
+          console.error('Download failed:', error);
+          alert('Download failed. Please try again.');
+        });
+      }
+    } else {
+      // Open link in new tab
+      if (resource.url) {
+        window.open(resource.url, '_blank');
+      } else {
+        alert('No URL available for this resource.');
+      }
+    }
+  };
 
   const BookmarkCard = ({ bookmark }: { bookmark: BookmarkedResource }) => {
     const { resource } = bookmark;
@@ -187,7 +226,10 @@ export const BookmarksPage: React.FC = () => {
               {resource.file_size && (
                 <span className="text-xs text-gray-500">{formatFileSize(resource.file_size)}</span>
               )}
-              <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+              <button 
+                onClick={() => handleResourceAction(resource)}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
                 {resource.resource_type === 'file' ? (
                   <>
                     <Download className="h-4 w-4 mr-1" />
@@ -243,7 +285,10 @@ export const BookmarksPage: React.FC = () => {
             >
               <Trash2 className="h-4 w-4 text-gray-400 group-hover:text-red-600" />
             </button>
-            <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => handleResourceAction(resource)}
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            >
               {resource.resource_type === 'file' ? (
                 <>
                   <Download className="h-3 w-3 mr-1" />
@@ -367,7 +412,7 @@ export const BookmarksPage: React.FC = () => {
           </p>
           {!searchQuery && selectedCategory === 'all' && (
             <button 
-              onClick={() => window.location.href = '/resources'}
+              onClick={() => navigate('/resources')}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Search className="h-4 w-4 mr-2" />
