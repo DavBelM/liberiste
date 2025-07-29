@@ -1,171 +1,231 @@
-
-
-import React from 'react';
-import { BookOpen, Users, Bookmark, Plus, LayoutDashboard } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  BookOpen, 
+  Bookmark, 
+  Plus, 
+  Upload,
+  FileText,
+  Link,
+  TrendingUp,
+  Clock,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usersAPI, resourcesAPI } from '../services/api';
+
+interface UserStats {
+  uploaded_resources: number;
+  bookmarks: number;
+  file_resources: number;
+  link_resources: number;
+}
+
+interface RecentResource {
+  id: number;
+  title: string;
+  resource_type: string;
+  uploader: {
+    first_name: string;
+    last_name: string;
+  };
+  created_at: string;
+  categories: Array<{ name: string }>;
+}
 
 export const DashboardPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [recentResources, setRecentResources] = useState<RecentResource[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch user stats
+        const statsResponse = await usersAPI.getUserStats();
+        setUserStats(statsResponse.data);
+        
+        // Fetch recent resources
+        const resourcesResponse = await resourcesAPI.getResources({ limit: 3 });
+        setRecentResources(resourcesResponse.data.resources || []);
+        
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return '1 day ago';
+    return `${diffInDays} days ago`;
+  };
 
   const stats = [
     {
-      name: 'Total Resources',
-      value: '156',
-      icon: BookOpen,
-      color: 'bg-blue-500',
-    },
-    {
-      name: 'Active Users',
-      value: '42',
-      icon: Users,
-      color: 'bg-green-500',
+      name: 'My Resources',
+      value: userStats?.uploaded_resources?.toString() || '0',
+      icon: FileText,
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+      change: loading ? 'Loading...' : `${userStats?.file_resources || 0} files, ${userStats?.link_resources || 0} links`
     },
     {
       name: 'My Bookmarks',
-      value: '23',
+      value: userStats?.bookmarks?.toString() || '0',
       icon: Bookmark,
-      color: 'bg-purple-500',
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+      change: loading ? 'Loading...' : 'Saved resources'
+    },
+    {
+      name: 'Total Resources',
+      value: loading ? '...' : recentResources.length.toString(),
+      icon: BookOpen,
+      color: 'bg-gradient-to-br from-green-500 to-green-600',
+      change: loading ? 'Loading...' : 'Platform wide'
     },
   ];
 
-  const navLinks = [
-    { name: 'Dashboard', icon: LayoutDashboard },
-    { name: 'Resources', icon: BookOpen },
-    { name: 'Bookmarks', icon: Bookmark },
-    { name: 'Categories', icon: Users },
-  ];
+
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg flex flex-col justify-between h-screen fixed left-0 top-0 z-10">
-        <div>
-          <div className="flex items-center px-6 py-8">
-            <BookOpen className="h-8 w-8 text-blue-600 mr-2" />
-            <span className="text-2xl font-bold text-blue-700">UniResource Hub</span>
-          </div>
-          <nav className="mt-8">
-            <ul className="space-y-2">
-              {navLinks.map((link) => (
-                <li key={link.name}>
-                  <a href="#" className="flex items-center px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors">
-                    <link.icon className="h-5 w-5 mr-3" />
-                    <span className="font-medium">{link.name}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-        <div className="px-6 py-8 border-t mt-8">
-          <div className="mb-2 text-sm text-gray-600">Welcome,</div>
-          <div className="font-semibold text-gray-900 mb-4 truncate">{user?.first_name} {user?.last_name}</div>
-          <button
-            onClick={logout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      </aside>
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Welcome section */}
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          Welcome back, {user?.first_name}! 👋
+        </h2>
+        <p className="text-gray-600">
+          Here's what's happening with your learning resources today.
+        </p>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 ml-64 p-10 overflow-y-auto min-h-screen">
-        {/* Welcome Section */}
-        <div className="mb-10 w-full flex flex-col items-center justify-center text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user?.first_name}!</h2>
-          <p className="text-gray-600 max-w-xl">Manage your learning resources and discover new content shared by your peers.</p>
-        </div>
-
-        {/* Dashboard Grid - single row below welcome */}
-        <div className="w-full flex flex-col gap-8 xl:flex-row xl:gap-8 xl:items-start justify-center">
-          {/* Stats */}
-          <div className="flex-1 space-y-6 max-w-md w-full mx-auto xl:mx-0">
-            {stats.map((stat) => (
-              <div key={stat.name} className="bg-white rounded-lg shadow p-6 flex items-center">
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <stat.icon className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {stats.map((stat) => (
+          <div key={stat.name} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
+                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-green-600 mt-1 flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  {stat.change}
+                </p>
               </div>
-            ))}
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex-1 bg-white rounded-lg shadow p-6 w-full max-w-md mx-auto xl:mx-0">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group">
-                <Plus className="h-6 w-6 text-gray-400 group-hover:text-blue-500 mr-2" />
-                <span className="text-gray-600 group-hover:text-blue-500 font-medium">
-                  Upload Resource
-                </span>
-              </button>
-              <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors group">
-                <BookOpen className="h-6 w-6 text-gray-400 group-hover:text-green-500 mr-2" />
-                <span className="text-gray-600 group-hover:text-green-500 font-medium">
-                  Browse Resources
-                </span>
-              </button>
-              <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors group">
-                <Bookmark className="h-6 w-6 text-gray-400 group-hover:text-purple-500 mr-2" />
-                <span className="text-gray-600 group-hover:text-purple-500 font-medium">
-                  View Bookmarks
-                </span>
-              </button>
-              <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors group">
-                <Users className="h-6 w-6 text-gray-400 group-hover:text-orange-500 mr-2" />
-                <span className="text-gray-600 group-hover:text-orange-500 font-medium">
-                  Manage Categories
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="flex-1 bg-white rounded-lg shadow p-6 w-full max-w-md mx-auto xl:mx-0">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-            <div className="space-y-4">
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-                <div className="bg-blue-500 p-2 rounded-full">
-                  <BookOpen className="h-4 w-4 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-900">
-                    New resource "Machine Learning Fundamentals" was uploaded
-                  </p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-                <div className="bg-green-500 p-2 rounded-full">
-                  <Users className="h-4 w-4 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-900">
-                    3 new students joined the platform
-                  </p>
-                  <p className="text-xs text-gray-500">5 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-                <div className="bg-purple-500 p-2 rounded-full">
-                  <Bookmark className="h-4 w-4 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-900">
-                    You bookmarked "Data Structures Guide"
-                  </p>
-                  <p className="text-xs text-gray-500">1 day ago</p>
-                </div>
+              <div className={`${stat.color} p-3 rounded-xl shadow-sm`}>
+                <stat.icon className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>
+        ))}
+      </div>
+
+      {/* Content grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="w-2 h-5 bg-blue-500 rounded mr-3"></div>
+            Quick Actions
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
+              <Upload className="h-8 w-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-3 transition-colors" />
+              <p className="text-sm font-medium text-gray-600 group-hover:text-blue-500 transition-colors">
+                Upload File
+              </p>
+            </button>
+            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all group">
+              <Link className="h-8 w-8 text-gray-400 group-hover:text-green-500 mx-auto mb-3 transition-colors" />
+              <p className="text-sm font-medium text-gray-600 group-hover:text-green-500 transition-colors">
+                Add Link
+              </p>
+            </button>
+            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all group">
+              <Bookmark className="h-8 w-8 text-gray-400 group-hover:text-purple-500 mx-auto mb-3 transition-colors" />
+              <p className="text-sm font-medium text-gray-600 group-hover:text-purple-500 transition-colors">
+                View Bookmarks
+              </p>
+            </button>
+            <button className="p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group">
+              <TrendingUp className="h-8 w-8 text-gray-400 group-hover:text-orange-500 mx-auto mb-3 transition-colors" />
+              <p className="text-sm font-medium text-gray-600 group-hover:text-orange-500 transition-colors">
+                Analytics
+              </p>
+            </button>
+          </div>
         </div>
-      </main>
+
+        {/* Recent Resources */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <div className="w-2 h-5 bg-green-500 rounded mr-3"></div>
+              Recent Resources
+            </h3>
+            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              View all
+            </button>
+          </div>
+          <div className="space-y-4">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Loading recent resources...</p>
+              </div>
+            ) : recentResources.length > 0 ? (
+              recentResources.map((resource) => (
+                <div key={resource.id} className="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+                  <div className="flex-shrink-0">
+                    {resource.resource_type === 'file' ? (
+                      <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-red-600" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Link className="h-6 w-6 text-blue-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-4 flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {resource.title}
+                    </p>
+                    <div className="flex items-center text-xs text-gray-500 mt-1">
+                      <span>{resource.uploader.first_name} {resource.uploader.last_name}</span>
+                      <span className="mx-2">•</span>
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span>{formatTimeAgo(resource.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {resource.categories[0]?.name || 'Uncategorized'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No resources yet</p>
+                <p className="text-sm text-gray-400">Upload your first resource to get started!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

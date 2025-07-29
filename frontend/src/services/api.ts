@@ -80,24 +80,26 @@ export const usersAPI = {
 
   deleteUser: async (userId: number): Promise<AxiosResponse<void>> =>
     api.delete(`/users/${userId}`),
+
+  getUserStats: async (): Promise<AxiosResponse<any>> =>
+    api.get('/users/me/stats'),
+
+  updateProfile: async (userData: Partial<User>): Promise<AxiosResponse<User>> =>
+    api.put('/users/me', userData),
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<AxiosResponse<any>> =>
+    api.post('/users/me/change-password', { current_password: currentPassword, new_password: newPassword }),
 };
 
 // Resources API
 export const resourcesAPI = {
-  getResources: async (filters: ResourceFilter = {}): Promise<AxiosResponse<PaginatedResponse<Resource>>> => {
-    const params = new URLSearchParams();
+  getResources: async (params?: { limit?: number; offset?: number; query?: string }): Promise<AxiosResponse<any>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.offset) searchParams.append('offset', params.offset.toString());
+    if (params?.query) searchParams.append('query', params.query);
     
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach(item => params.append(key, item.toString()));
-        } else {
-          params.append(key, value.toString());
-        }
-      }
-    });
-
-    return api.get(`/resources?${params.toString()}`);
+    return api.get(`/resources?${searchParams.toString()}`);
   },
 
   getResource: async (resourceId: number): Promise<AxiosResponse<Resource>> =>
