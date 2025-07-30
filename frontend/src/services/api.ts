@@ -15,7 +15,9 @@ import {
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1', // Use local backend
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? 'https://your-render-backend-url.onrender.com/api/v1'  // Replace with actual Render URL
+    : 'http://localhost:8000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
