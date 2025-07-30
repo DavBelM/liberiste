@@ -35,9 +35,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     
     try:
         payload = verify_token(token)
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        user_id_str = payload.get("sub")
+        if user_id_str is None:
             raise credentials_exception
+        user_id = int(user_id_str)  # Convert string to int
     except Exception:
         raise credentials_exception
     
