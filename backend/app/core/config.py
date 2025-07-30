@@ -75,8 +75,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # DATABASE_URL will be automatically set by Render PostgreSQL
-print(f"DEBUG: DATABASE_URL = {settings.DATABASE_URL}")
 # Convert postgresql:// to postgresql+psycopg:// for psycopg3
 if settings.DATABASE_URL.startswith("postgresql://"):
     settings.DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
-    print(f"DEBUG: Converted DATABASE_URL = {settings.DATABASE_URL}")
