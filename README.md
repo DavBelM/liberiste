@@ -2,6 +2,13 @@
 
 A centralized platform for managing and accessing academic learning resources for ALU students.
 
+## 🚀 Live Deployment
+
+- **Frontend**: [https://liberiste-otrblm7io-gunnerbels-projects.vercel.app/](https://liberiste-otrblm7io-gunnerbels-projects.vercel.app/)
+- **Backend API**: [https://liberiste.onrender.com](https://liberiste.onrender.com)
+- **API Documentation**: [https://liberiste.onrender.com/docs](https://liberiste.onrender.com/docs)
+- **Repository**: [https://github.com/DavBelM/liberiste](https://github.com/DavBelM/liberiste)
+
 ## Overview
 
 The UniResource Hub is a web-based application designed to eliminate resource fragmentation by providing a unified platform where ALU students can upload, organize, search, and access all their academic materials in one place.
@@ -36,8 +43,10 @@ The UniResource Hub is a web-based application designed to eliminate resource fr
 
 ### Infrastructure
 
+- **Vercel**: Frontend hosting and deployment
+- **Render**: Backend API hosting
+- **Render PostgreSQL**: Database hosting
 - **Docker**: Containerization for easy deployment
-- **Cloud Storage**: File storage and management
 
 ## Project Structure
 
@@ -116,8 +125,11 @@ liberiste/
 
 ## API Documentation
 
-Once the backend is running, API documentation is available at:
+### Live API Documentation
+- **Swagger UI**: [https://liberiste.onrender.com/docs](https://liberiste.onrender.com/docs)
+- **ReDoc**: [https://liberiste.onrender.com/redoc](https://liberiste.onrender.com/redoc)
 
+### Local Development
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -127,6 +139,18 @@ Once the backend is running, API documentation is available at:
 2. Write tests for new features
 3. Update documentation as needed
 4. Ensure all security requirements are met
+
+## Deployment
+
+The application is deployed using modern cloud platforms:
+
+- **Frontend**: Deployed on Vercel with automatic deployments from GitHub
+- **Backend**: Deployed on Render with PostgreSQL database
+- **Database**: Render PostgreSQL with automatic backups
+
+### Deployment URLs
+- **Live App**: [https://liberiste-otrblm7io-gunnerbels-projects.vercel.app/](https://liberiste-otrblm7io-gunnerbels-projects.vercel.app/)
+- **API Endpoint**: [https://liberiste.onrender.com/api/v1](https://liberiste.onrender.com/api/v1)
 
 ## License
 
