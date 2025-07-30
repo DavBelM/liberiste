@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     
     # Database Configuration
     DATABASE_URL: str = "postgresql://localhost/uniresource"
+    PRISMA_DATABASE_URL: str = ""
     
     # Security Configuration
     SECRET_KEY: str = "default-secret-key-change-in-production"
@@ -72,3 +73,7 @@ class Settings(BaseSettings):
 
 # Create settings instance
 settings = Settings()
+
+# Use Prisma database URL if available
+if settings.PRISMA_DATABASE_URL:
+    settings.DATABASE_URL = settings.PRISMA_DATABASE_URL
