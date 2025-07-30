@@ -14,14 +14,17 @@ import {
 } from '../types';
 
 // Create axios instance with base configuration
+const VERCEL_API_URL = 'https://liberiste-j85u77d92-gunnerbels-projects.vercel.app/api/v1';
+const LOCAL_API_URL = 'http://localhost:8000/api/v1';
+
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://liberiste-j85u77d92-gunnerbels-projects.vercel.app/api/v1'
-    : 'http://localhost:8000/api/v1',
+  baseURL: process.env.NODE_ENV === 'production' ? VERCEL_API_URL : LOCAL_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+console.log('API Base URL:', process.env.NODE_ENV === 'production' ? VERCEL_API_URL : LOCAL_API_URL);
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
