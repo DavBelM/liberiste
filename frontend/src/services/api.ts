@@ -15,9 +15,7 @@ import {
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://liberiste-bchyfdwwo-gunnerbels-projects.vercel.app/api/v1'
-    : 'http://localhost:8000/api/v1',
+  baseURL: 'http://localhost:8000/api/v1', // Use local backend
   headers: {
     'Content-Type': 'application/json',
   },
