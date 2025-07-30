@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 from app.core.config import settings
 from app.api.api_v1.api import api_router
 from app.db.init_db import init_db
@@ -29,11 +29,7 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Add trusted host middleware for security
-    application.add_middleware(
-        TrustedHostMiddleware, 
-        allowed_hosts=["localhost", "127.0.0.1", "*.alu.edu"]
-    )
+
 
     # Include API router
     application.include_router(api_router, prefix="/api/v1")
