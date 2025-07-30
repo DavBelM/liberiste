@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Bookmark, 
-  Plus, 
   Upload,
   FileText,
   Link,
