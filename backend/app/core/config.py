@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # Database Configuration
     DATABASE_URL: str = "postgresql://localhost/uniresource"
-    ACTUAL_DATABASE_URL: str = ""
+
     
     # Security Configuration
     SECRET_KEY: str = "default-secret-key-change-in-production"
@@ -74,6 +74,4 @@ class Settings(BaseSettings):
 # Create settings instance
 settings = Settings()
 
-# Use actual database URL if available
-if settings.ACTUAL_DATABASE_URL:
-    settings.DATABASE_URL = settings.ACTUAL_DATABASE_URL
+# DATABASE_URL will be automatically set by Render PostgreSQL
