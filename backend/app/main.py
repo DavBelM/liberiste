@@ -20,11 +20,18 @@ def create_application() -> FastAPI:
         redoc_url="/redoc",  # Enable redoc in production for testing
     )
 
-    # CORS settings - allow all origins temporarily
+    # CORS settings for development and production
+    origins = [
+        "http://localhost:3000",  # Development
+        "http://localhost:3001",  # Development
+        "https://liberiste-brqsu0mwg-gunnerbels-projects.vercel.app",  # Current Vercel URL
+    ]
+    
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins temporarily
-        allow_credentials=False,  # Must be False when allow_origins=["*"]
+        allow_origins=origins,
+        allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel domains
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
