@@ -25,7 +25,7 @@ def create_application() -> FastAPI:
         "http://localhost:3000",  # Development
         "http://localhost:3001",  # Development
         "https://*.vercel.app",   # Vercel deployments
-        "https://your-vercel-url.vercel.app",  # Replace with actual Vercel URL
+        "https://liberiste-bchyfdwwo-gunnerbels-projects.vercel.app",  # Actual Vercel URL
     ]
     
     application.add_middleware(
