@@ -24,13 +24,13 @@ def create_application() -> FastAPI:
     origins = [
         "http://localhost:3000",  # Development
         "http://localhost:3001",  # Development
-        "https://*.vercel.app",   # Vercel deployments
-        "https://liberiste-bchyfdwwo-gunnerbels-projects.vercel.app",  # Actual Vercel URL
+        "https://liberiste-anlfoech9-gunnerbels-projects.vercel.app",  # Current Vercel URL
     ]
     
     application.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
+        allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel domains
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
