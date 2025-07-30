@@ -16,8 +16,8 @@ def create_application() -> FastAPI:
         title="UniResource Hub API",
         description="A centralized platform for managing and accessing academic learning resources for ALU students",
         version="1.0.0",
-        docs_url="/docs" if settings.DEBUG else None,
-        redoc_url="/redoc" if settings.DEBUG else None,
+        docs_url="/docs",  # Enable docs in production for testing
+        redoc_url="/redoc",  # Enable redoc in production for testing
     )
 
     # CORS settings - allow all origins temporarily
